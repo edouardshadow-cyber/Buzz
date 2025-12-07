@@ -1,67 +1,79 @@
 import streamlit as st
 import time
 import qrcode
-from PIL import Image
 from io import BytesIO
 
 # --- CONFIGURATION DE LA PAGE ---
 st.set_page_config(page_title="Team Buzzer", page_icon="🚨", layout="centered")
 
-# --- URL DE VOTRE APP (Pour le QR Code) ---
+# --- URL DE VOTRE APP ---
 APP_URL = "https://jmgdqtj4u9obietzmgj2hg.streamlit.app/"
 
-# --- CSS PERSONNALISÉ (STYLE DU BUZZER 3D) ---
+# --- CSS ET STYLE (CRUCIAL POUR L'AFFICHAGE) ---
 st.markdown("""
     <style>
-    /* Style global pour centrer les éléments */
+    /* 1. REMONTER LE CONTENU (Supprimer les marges vides en haut) */
     .block-container {
-        padding-top: 2rem;
-    }
-
-    /* LE STYLE DU BUZZER ARCADE 3D */
-    /* On cible le bouton spécifique qui contient le texte "BUZZ" vide */
-    div.stButton > button.buzzer-style {
-        width: 200px !important;
-        height: 200px !important;
-        border-radius: 50% !important;
-        background: radial-gradient(circle at 30% 30%, #ff4d4d, #cc0000);
-        border: 4px solid #8b0000;
-        box-shadow: 
-            0 10px 0 #8b0000, /* L'épaisseur 3D du bouton */
-            0 10px 20px rgba(0,0,0,0.4), /* L'ombre portée au sol */
-            inset 0 10px 20px rgba(255,255,255,0.4); /* Le reflet brillant dessus */
-        color: white;
-        font-weight: bold;
-        font-size: 24px;
-        transition: all 0.1s;
-        margin: 0 auto;
-        display: block;
-    }
-
-    /* Effet quand on appuie dessus */
-    div.stButton > button.buzzer-style:active {
-        transform: translateY(10px); /* Le bouton descend */
-        box-shadow: 
-            0 0 0 #8b0000, /* L'épaisseur 3D disparait */
-            0 0 5px rgba(0,0,0,0.4), /* L'ombre se réduit */
-            inset 0 10px 20px rgba(255,255,255,0.4);
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
     }
     
-    /* Retirer le focus rouge vilain sur mobile */
-    div.stButton > button.buzzer-style:focus:not(:active) {
-        border-color: #8b0000;
+    /* 2. STYLE DES JOUEURS */
+    /* Case pour l'utilisateur actuel (BLEU) */
+    .my-card {
+        background-color: #007bff;
         color: white;
+        padding: 10px;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: bold;
+        margin: 5px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    /* Case pour les autres joueurs (GRIS) */
+    .other-card {
+        background-color: #f0f2f6;
+        color: #31333F;
+        padding: 8px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 14px;
+        margin: 5px 0;
+        border: 1px solid #e0e0e0;
     }
 
-    /* Style des joueurs */
-    .player-status {
-        font-size: 16px;
-        margin: 2px;
-        padding: 5px;
-        border-radius: 5px;
-        background-color: #f1f3f6;
-        text-align: center;
-        border: 1px solid #ddd;
+    /* 3. LE BUZZER (Ciblage du bouton Primary) */
+    /* On transforme tout bouton "Primaire" en gros buzzer rouge rond */
+    div.stButton > button[kind="primary"] {
+        width: 100% !important;
+        height: 220px !important;
+        border-radius: 50% !important;
+        background: radial-gradient(circle at 30% 30%, #ff5e5e, #d60000); /* Effet 3D Rouge */
+        border: 5px solid #8b0000;
+        box-shadow: 
+            0 15px 0 #8b0000, /* Coté 3D */
+            0 15px 20px rgba(0,0,0,0.4); /* Ombre sol */
+        color: white;
+        font-size: 40px !important;
+        font-weight: 900 !important;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        margin-top: 20px;
+        margin-bottom: 20px;
+        transition: all 0.1s;
+        white-space: normal !important; /* Permet au texte de bouger */
+    }
+
+    /* Effet d'enfoncement au clic */
+    div.stButton > button[kind="primary"]:active {
+        transform: translateY(15px);
+        box-shadow: 0 0 0 #8b0000, 0 0 10px rgba(0,0,0,0.4);
+        background: radial-gradient(circle at 30% 30%, #d60000, #a00000);
+    }
+    
+    /* Cacher la bordure de focus rouge par défaut sur mobile */
+    div.stButton > button[kind="primary"]:focus:not(:active) {
+        border-color: #8b0000;
+        color: white;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -115,152 +127,161 @@ class SharedGameState:
 
 game_state = SharedGameState()
 
-# --- FONCTION AUDIO ---
+# --- UTILS ---
 def play_buzzer_sound():
     sound_url = "https://www.myinstants.com/media/sounds/wrong-answer-sound-effect.mp3"
     st.markdown(f"""<audio autoplay><source src="{sound_url}" type="audio/mp3"></audio>""", unsafe_allow_html=True)
 
-# --- FONCTION QR CODE ---
 def generate_qr(url):
     qr = qrcode.QRCode(version=1, box_size=10, border=4)
     qr.add_data(url)
     qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    return img
+    return qr.make_image(fill_color="black", back_color="white")
 
 # --- BARRE LATÉRALE ---
 with st.sidebar:
-    
-    # --- SECTION PARTAGE ---
-    with st.expander("📱 Partager l'app", expanded=False):
+    with st.expander("📱 QR Code Partage", expanded=False):
         img = generate_qr(APP_URL)
         buf = BytesIO()
-        img.save(buf)
-        st.image(buf, caption="Scannez pour rejoindre", use_container_width=True)
+        img.save(buf, format="PNG")
+        st.image(buf, caption="Rejoindre l'équipe", use_container_width=True)
         st.code(APP_URL, language=None)
 
     st.divider()
 
-    # --- SECTION ADMIN (DANS UN EXPANDER, PLUS STABLE QUE POPOVER) ---
-    with st.expander("⚙️ Admin", expanded=False):
+    with st.expander("⚙️ Admin Zone", expanded=False):
         password = st.text_input("Mot de passe", type="password")
         if password == "admin":
-            st.success("Connecté")
+            st.success("Admin connecté")
             
-            st.markdown("#### 1. Équipe")
-            col_add1, col_add2 = st.columns([2, 1])
-            new_member = col_add1.text_input("Nom", label_visibility="collapsed", placeholder="Nom...")
-            if col_add2.button("Ajouter"):
-                game_state.add_player(new_member)
+            st.markdown("#### Gestion Équipe")
+            c1, c2 = st.columns([2, 1])
+            new_name = c1.text_input("Nom", label_visibility="collapsed", placeholder="Nom...")
+            if c2.button("Ajouter"):
+                game_state.add_player(new_name)
                 st.rerun()
 
-            if st.button("⚠️ Vider l'équipe"):
+            if st.button("⚠️ Reset Total Équipe"):
                 game_state.players = {}
                 game_state.reset_game_totally()
                 st.rerun()
 
-            st.markdown("#### 2. Jeu")
-            
-            # Boutons de contrôle classiques
-            if st.button("▶️ GO ! (Start)", type="primary", use_container_width=True):
+            st.markdown("#### Maître du Jeu")
+            # NOTE : On utilise type="secondary" ici pour ne pas qu'ils ressemblent au buzzer
+            if st.button("▶️ Lancer Question", use_container_width=True):
                 game_state.start_fresh_round()
                 st.rerun()
 
             if game_state.buzzed_player:
-                 if st.button("❌ Faux -> Relancer", use_container_width=True):
+                 if st.button("❌ Faux -> Reprendre", use_container_width=True):
                      game_state.resume_round()
                      st.rerun()
             
-            if st.button("⏹️ Reset Manche", use_container_width=True):
+            if st.button("⏹️ Stop / Reset", use_container_width=True):
                 game_state.reset_game_totally()
                 st.rerun()
-        elif password:
-            st.error("Mot de passe incorrect")
 
-# --- LOGIN UTILISATEUR ---
+# --- LOGIQUE DE CONNEXION ---
 if 'current_user' not in st.session_state:
     st.session_state.current_user = None
 
 if not st.session_state.current_user:
-    st.title("👋 Bienvenue !")
+    st.title("🚨 Team Buzzer")
     if not game_state.players:
-        st.info("Attente de l'admin...")
+        st.info("Attente de l'admin pour créer l'équipe...")
     else:
-        options = ["-- Moi c'est... --"] + [p for p in game_state.players.keys() if not game_state.players[p]['connected']]
+        options = ["-- Qui êtes-vous ? --"] + [p for p in game_state.players.keys() if not game_state.players[p]['connected']]
         choice = st.selectbox("", options)
-        
-        if st.button("Valider") and choice != "-- Moi c'est... --":
+        if st.button("Valider", type="primary") and choice != "-- Qui êtes-vous ? --":
             st.session_state.current_user = choice
             game_state.connect_player(choice)
             st.rerun()
 
-# --- INTERFACE JEU ---
+# --- ÉCRAN DE JEU ---
 else:
-    current_user = st.session_state.current_user
+    me = st.session_state.current_user
     
-    # Header compact
-    cols_header = st.columns([1, 3])
-    cols_header[0].markdown(f"**{current_user}**")
-    with cols_header[1]:
-        cols_players = st.columns(5)
-        for idx, (name, data) in enumerate(game_state.players.items()):
-            icon = "🟢" if data['connected'] else "⚪"
-            # On affiche juste l'icone pour gagner de la place si beaucoup de joueurs
-            with cols_players[idx % 5]:
-                 st.markdown(f"<div title='{name}'>{icon}</div>", unsafe_allow_html=True)
+    # --- 1. AFFICHAGE DE L'ÉQUIPE (GRILLE) ---
+    # On affiche d'abord la liste pour que ce soit en haut
+    st.caption("L'Équipe en direct :")
     
+    # On crée des colonnes dynamiques (4 par ligne)
+    player_names = list(game_state.players.keys())
+    
+    # Boucle pour afficher les joueurs par ligne de 4
+    for i in range(0, len(player_names), 4):
+        cols = st.columns(4)
+        for j in range(4):
+            if i + j < len(player_names):
+                p_name = player_names[i + j]
+                p_data = game_state.players[p_name]
+                icon = "✅" if p_data['connected'] else "⏳"
+                
+                with cols[j]:
+                    # SI C'EST MOI -> Style Bleu (.my-card)
+                    if p_name == me:
+                        st.markdown(f"<div class='my-card'>{icon} {p_name} (Moi)</div>", unsafe_allow_html=True)
+                    # SI C'EST UN AUTRE -> Style Gris (.other-card)
+                    else:
+                        st.markdown(f"<div class='other-card'>{icon} {p_name}</div>", unsafe_allow_html=True)
+
     st.divider()
 
-    # Zone de jeu avec rafraichissement rapide
+    # --- 2. ZONE DE JEU (Fragment = Refresh rapide) ---
     @st.fragment(run_every=0.2)
     def game_zone():
-        # Astuce CSS pour appliquer le style "buzzer-style" au bouton Python ci-dessous
-        # Streamlit ne permet pas de mettre des classes directement, donc on triche avec le JavaScript/CSS
-        # Le bouton ci-dessous aura un ID interne, on applique le style global défini en haut
         
+        # CAS 1 : JEU ACTIF (ON ATTEND LE BUZZ)
         if game_state.game_active:
-            st.markdown("<h2 style='text-align: center;'>PRÊTS ?</h2>", unsafe_allow_html=True)
+            st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>À VOS MARQUES...</h2>", unsafe_allow_html=True)
             
-            col1, col2, col3 = st.columns([1,2,1])
-            with col2:
-                # Le bouton a des espaces pour le rendre large, mais le CSS va forcer la forme ronde
-                # On utilise type="primary" pour aider le ciblage si besoin, mais le CSS fait le gros du travail
-                if st.button("BUZZ !", key="the_buzzer"): 
-                    game_state.buzz(current_user)
+            # Pour centrer le buzzer, on utilise 3 colonnes, buzzer au milieu
+            c_left, c_buzzer, c_right = st.columns([1, 2, 1])
+            with c_buzzer:
+                # BOUTON TYPE PRIMARY = Le style CSS Rouge s'applique ici
+                if st.button("BUZZ !", type="primary"):
+                    game_state.buzz(me)
                     st.rerun()
 
-            # Application forcée du style CSS sur ce bouton spécifique via JavaScript hack léger
-            # C'est nécessaire car Streamlit isole les composants
-            st.markdown("""
-                <script>
-                const buttons = window.parent.document.querySelectorAll('button');
-                buttons.forEach(btn => {
-                    if (btn.innerText.includes("BUZZ !")) {
-                        btn.classList.add("buzzer-style");
-                    }
-                });
-                </script>
-                """, unsafe_allow_html=True)
-            
+            # Affichage du chrono
             if game_state.start_timestamp:
-                current_segment_time = time.time() - game_state.start_timestamp
-                total_time_live = game_state.accumulated_time + current_segment_time
-                st.markdown(f"<h3 style='text-align: center; color: grey;'>⏱️ {total_time_live:.2f} s</h3>", unsafe_allow_html=True)
+                t = (time.time() - game_state.start_timestamp) + game_state.accumulated_time
+                st.markdown(f"<p style='text-align: center; font-size: 20px; color: #666;'>⏱️ {t:.2f} s</p>", unsafe_allow_html=True)
 
+        # CAS 2 : QUELQU'UN A BUZZÉ
         elif game_state.buzzed_player:
-            st.markdown("<h1 style='text-align: center; font-size: 60px;'>🚨 BUZZ !</h1>", unsafe_allow_html=True)
-            winner_color = "#28a745" if current_user == game_state.buzzed_player else "#dc3545"
-            st.markdown(f"<h2 style='text-align: center; color: {winner_color};'>{game_state.buzzed_player}</h2>", unsafe_allow_html=True)
-            st.markdown(f"<h3 style='text-align: center;'>{game_state.final_buzzed_time:.2f} s</h3>", unsafe_allow_html=True)
+            st.markdown("<h1 style='text-align: center; font-size: 60px; margin-top: 0;'>🚨 STOP !</h1>", unsafe_allow_html=True)
+            
+            winner = game_state.buzzed_player
+            color = "#007bff" if winner == me else "#dc3545" # Bleu si c'est moi, Rouge si c'est l'autre
+            
+            st.markdown(
+                f"""
+                <div style='background-color: {color}; color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px;'>
+                    <h2 style='margin:0;'>{winner}</h2>
+                    <h1 style='margin:0; font-size: 50px;'>{game_state.final_buzzed_time:.2f}s</h1>
+                </div>
+                """, 
+                unsafe_allow_html=True
+            )
+            
             play_buzzer_sound()
             
-            if current_user == game_state.buzzed_player:
-                 st.success("À vous de répondre !")
+            if winner == me:
+                st.success("🎤 C'est à vous de répondre !")
             else:
-                 st.info("Silence...")
+                st.info(f"🤫 Silence, {winner} réfléchit...")
 
+        # CAS 3 : PAUSE / ATTENTE
         else:
-            st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
-            st.markdown("<h3 style='text-align: center; color: grey;'>⏸️ Pause</h3>", unsafe_allow_html=True)
+            st.markdown(
+                """
+                <div style='text-align: center; color: grey; margin-top: 40px;'>
+                    <h3>⏸️ En attente de l'animateur</h3>
+                    <p>Préparez-vous...</p>
+                </div>
+                """, 
+                unsafe_allow_html=True
+            )
 
     game_zone()
