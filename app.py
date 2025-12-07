@@ -9,18 +9,22 @@ st.set_page_config(page_title="Team Buzzer", page_icon="🚨", layout="centered"
 # --- URL DE VOTRE APP ---
 APP_URL = "https://jmgdqtj4u9obietzmgj2hg.streamlit.app/"
 
-# --- CSS ET STYLE (CRUCIAL POUR L'AFFICHAGE) ---
-st.markdown("""
+# --- URL DE L'IMAGE REALISTE DU BUZZER ---
+# J'utilise un lien public fiable vers un bouton très similaire à votre demande.
+# Si le lien casse un jour, il faudra le remplacer par le vôtre ou une image en base64.
+REALISTIC_BUZZER_URL = "https://i.imgur.com/J3M8iqP.png"
+
+# --- CSS ET STYLE (MODIFIÉ POUR L'IMAGE RÉALISTE) ---
+st.markdown(f"""
     <style>
-    /* 1. REMONTER LE CONTENU (Supprimer les marges vides en haut) */
-    .block-container {
+    /* 1. REMONTER LE CONTENU */
+    .block-container {{
         padding-top: 1rem !important;
         padding-bottom: 1rem !important;
-    }
+    }}
     
     /* 2. STYLE DES JOUEURS */
-    /* Case pour l'utilisateur actuel (BLEU) */
-    .my-card {
+    .my-card {{
         background-color: #007bff;
         color: white;
         padding: 10px;
@@ -29,9 +33,8 @@ st.markdown("""
         font-weight: bold;
         margin: 5px 0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    /* Case pour les autres joueurs (GRIS) */
-    .other-card {
+    }}
+    .other-card {{
         background-color: #f0f2f6;
         color: #31333F;
         padding: 8px;
@@ -40,41 +43,49 @@ st.markdown("""
         font-size: 14px;
         margin: 5px 0;
         border: 1px solid #e0e0e0;
-    }
+    }}
 
-    /* 3. LE BUZZER (Ciblage du bouton Primary) */
-    /* On transforme tout bouton "Primaire" en gros buzzer rouge rond */
-    div.stButton > button[kind="primary"] {
-        width: 100% !important;
-        height: 220px !important;
-        border-radius: 50% !important;
-        background: radial-gradient(circle at 30% 30%, #ff5e5e, #d60000); /* Effet 3D Rouge */
-        border: 5px solid #8b0000;
-        box-shadow: 
-            0 15px 0 #8b0000, /* Coté 3D */
-            0 15px 20px rgba(0,0,0,0.4); /* Ombre sol */
-        color: white;
-        font-size: 40px !important;
-        font-weight: 900 !important;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        margin-top: 20px;
-        margin-bottom: 20px;
-        transition: all 0.1s;
-        white-space: normal !important; /* Permet au texte de bouger */
-    }
+    /* 3. LE BUZZER IMAGE RÉALISTE */
+    /* On cible le bouton "Primary" */
+    div.stButton > button[kind="primary"] {{
+        /* Taille de l'image */
+        width: 280px !important;
+        height: 280px !important;
+        
+        /* On retire les styles de bouton par défaut */
+        border: none !important;
+        border-radius: 0 !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+        
+        /* On applique l'image comme fond */
+        background-image: url('{REALISTIC_BUZZER_URL}') !important;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        
+        /* Centrage */
+        margin: 20px auto;
+        display: block;
+        
+        transition: transform 0.1s;
+    }}
 
-    /* Effet d'enfoncement au clic */
-    div.stButton > button[kind="primary"]:active {
-        transform: translateY(15px);
-        box-shadow: 0 0 0 #8b0000, 0 0 10px rgba(0,0,0,0.4);
-        background: radial-gradient(circle at 30% 30%, #d60000, #a00000);
-    }
+    /* IMPORTANT : On cache le texte "BUZZ !" qui est DANS le bouton pour ne voir que l'image */
+    div.stButton > button[kind="primary"] p {{
+        display: none !important;
+    }}
+
+    /* Effet d'enfoncement simple au clic */
+    div.stButton > button[kind="primary"]:active {{
+        transform: scale(0.97) translateY(5px);
+    }}
     
-    /* Cacher la bordure de focus rouge par défaut sur mobile */
-    div.stButton > button[kind="primary"]:focus:not(:active) {
-        border-color: #8b0000;
-        color: white;
-    }
+    /* Cacher la bordure de focus sur mobile */
+    div.stButton > button[kind="primary"]:focus:not(:active) {{
+        border: none !important;
+        color: transparent !important;
+    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -167,7 +178,7 @@ with st.sidebar:
                 st.rerun()
 
             st.markdown("#### Maître du Jeu")
-            # NOTE : On utilise type="secondary" ici pour ne pas qu'ils ressemblent au buzzer
+            # NOTE : type="secondary" pour ne pas qu'ils ressemblent au buzzer
             if st.button("▶️ Lancer Question", use_container_width=True):
                 game_state.start_fresh_round()
                 st.rerun()
@@ -201,14 +212,9 @@ if not st.session_state.current_user:
 else:
     me = st.session_state.current_user
     
-    # --- 1. AFFICHAGE DE L'ÉQUIPE (GRILLE) ---
-    # On affiche d'abord la liste pour que ce soit en haut
+    # --- 1. AFFICHAGE DE L'ÉQUIPE ---
     st.caption("L'Équipe en direct :")
-    
-    # On crée des colonnes dynamiques (4 par ligne)
     player_names = list(game_state.players.keys())
-    
-    # Boucle pour afficher les joueurs par ligne de 4
     for i in range(0, len(player_names), 4):
         cols = st.columns(4)
         for j in range(4):
@@ -216,12 +222,9 @@ else:
                 p_name = player_names[i + j]
                 p_data = game_state.players[p_name]
                 icon = "✅" if p_data['connected'] else "⏳"
-                
                 with cols[j]:
-                    # SI C'EST MOI -> Style Bleu (.my-card)
                     if p_name == me:
                         st.markdown(f"<div class='my-card'>{icon} {p_name} (Moi)</div>", unsafe_allow_html=True)
-                    # SI C'EST UN AUTRE -> Style Gris (.other-card)
                     else:
                         st.markdown(f"<div class='other-card'>{icon} {p_name}</div>", unsafe_allow_html=True)
 
@@ -235,10 +238,11 @@ else:
         if game_state.game_active:
             st.markdown("<h2 style='text-align: center; margin-bottom: 0;'>À VOS MARQUES...</h2>", unsafe_allow_html=True)
             
-            # Pour centrer le buzzer, on utilise 3 colonnes, buzzer au milieu
-            c_left, c_buzzer, c_right = st.columns([1, 2, 1])
+            # Centrage du buzzer
+            c_left, c_buzzer, c_right = st.columns([1, 3, 1])
             with c_buzzer:
-                # BOUTON TYPE PRIMARY = Le style CSS Rouge s'applique ici
+                # BOUTON TYPE PRIMARY = L'image du buzzer s'applique ici
+                # Le texte "BUZZ !" est caché par le CSS
                 if st.button("BUZZ !", type="primary"):
                     game_state.buzz(me)
                     st.rerun()
@@ -246,14 +250,14 @@ else:
             # Affichage du chrono
             if game_state.start_timestamp:
                 t = (time.time() - game_state.start_timestamp) + game_state.accumulated_time
-                st.markdown(f"<p style='text-align: center; font-size: 20px; color: #666;'>⏱️ {t:.2f} s</p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='text-align: center; font-size: 20px; color: #666; margin-top: 10px;'>⏱️ {t:.2f} s</p>", unsafe_allow_html=True)
 
         # CAS 2 : QUELQU'UN A BUZZÉ
         elif game_state.buzzed_player:
             st.markdown("<h1 style='text-align: center; font-size: 60px; margin-top: 0;'>🚨 STOP !</h1>", unsafe_allow_html=True)
             
             winner = game_state.buzzed_player
-            color = "#007bff" if winner == me else "#dc3545" # Bleu si c'est moi, Rouge si c'est l'autre
+            color = "#007bff" if winner == me else "#dc3545"
             
             st.markdown(
                 f"""
@@ -264,9 +268,7 @@ else:
                 """, 
                 unsafe_allow_html=True
             )
-            
             play_buzzer_sound()
-            
             if winner == me:
                 st.success("🎤 C'est à vous de répondre !")
             else:
