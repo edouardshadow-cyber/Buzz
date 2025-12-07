@@ -12,7 +12,7 @@ APP_URL = "https://jmgdqtj4u9obietzmgj2hg.streamlit.app/"
 # --- URL DE L'IMAGE REALISTE DU BUZZER ---
 # J'utilise un lien public fiable vers un bouton très similaire à votre demande.
 # Si le lien casse un jour, il faudra le remplacer par le vôtre ou une image en base64.
-REALISTIC_BUZZER_URL = "https://share.google/HLfbg3r4A6MfjfNXT"
+REALISTIC_BUZZER_URL = "https://w7.pngwing.com/pngs/447/670/png-transparent-buzzer-game-show-android-android-game-effect-sound-thumbnail.png"
 
 # --- CSS ET STYLE (MODIFIÉ POUR L'IMAGE RÉALISTE) ---
 st.markdown(f"""
